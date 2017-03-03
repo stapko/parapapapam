@@ -10,7 +10,7 @@ class GridSearchCVSave(GridSearchCV):
             filename = str(self.estimator).partition('(')[0] + time.asctime()
 
         gsearch_res = self.fit(X, y)
-        self._save_results(gsearch_res, filename)
+        self._save_results(self.grid_scores_, filename)
         return gsearch_res
 
     @staticmethod
