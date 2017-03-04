@@ -4,10 +4,16 @@ import numpy as np
 from sklearn.grid_search import GridSearchCV
 
 
+__all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave']
+
+
 class GridSearchCVSave(GridSearchCV):
     def fit_and_save(self, X, y, filename=None):
         if not filename:
-            filename = str(self.estimator).partition('(')[0] + time.asctime()
+            filename = str(self.estimator).partition('(')[0] + time.asctime() + '.csv'
+	elif filename:
+	    if filename.rpartition('.')[-1] != 'csv':
+		raise ValueError
 
         gsearch_res = self.fit(X, y)
         self._save_results(self.grid_scores_, filename)
@@ -33,3 +39,15 @@ class GridSearchCVSave(GridSearchCV):
         df_result['cv'] = cv
         df_result['params'] = params
         df_result.to_csv(filename, index=False)
+
+
+# If change name it also need to change it above in '__all__' list
+class GranularGridSearchCVSave(GridSearchCV):
+    def fit_and_save(self, X, y, filename=None):
+        if not filename:
+            filename = str(self.estimator).partition('(')[0] + time.asctime() + '.csv'
+	elif filename:
+	    if filename.rpartition('.')[-1] != 'csv':
+		raise ValueError
+
+	# TODO: granular grid serach
