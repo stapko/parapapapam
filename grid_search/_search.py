@@ -5,6 +5,7 @@ from sklearn.grid_search import GridSearchCV
 from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 
+
 __all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave']
 
 
@@ -15,6 +16,7 @@ class GridSearchCVSave(GridSearchCV):
         elif filename:
             if filename.rpartition('.')[-1] != 'csv':
                 raise ValueError
+
 
         gsearch_res = self.fit(X, y)
         self._save_results(self.grid_scores_, filename)
@@ -43,6 +45,7 @@ class GridSearchCVSave(GridSearchCV):
 
 
 # If change name it also need to change it above in '__all__' list
+
 class GranularGridSearchCVSave:
     def fit_and_save(self, estimator, X, y, params, scoring, filename=None, verbose=False, cv=5):
         h_e_a_d_e_r = "mean\tstd\tcv\tparams\n"
