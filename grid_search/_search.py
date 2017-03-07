@@ -44,7 +44,7 @@ class GridSearchCVSave(GridSearchCV):
 
 # If change name it also need to change it above in '__all__' list
 class GranularGridSearchCVSave:
-    def fit_and_save(self, estimator, X, y, params, scoring, filename=None, cv=5):
+    def fit_and_save(self, estimator, X, y, params, scoring, filename=None, verbose=False, cv=5):
         h_e_a_d_e_r = "mean\tstd\tcv\tparams\n"
 
         params_combinations = self._params_combinations(params)
@@ -71,7 +71,9 @@ class GranularGridSearchCVSave:
                 params) + '\n'
             with open(filename, 'a') as the_file:
                 the_file.write(result_string)
-            print('mean:{:2.5f}\tstd:{:2.5f}\tcv:{:3d}\tparams:{}'.format(mean, std, cv, params))
+
+            if verbose:
+                print('mean:{:2.5f}\tstd:{:2.5f}\tcv:{:3d}\tparams:{}'.format(mean, std, cv, params))
 
     def _check_header(self, filename, header):
         try:
