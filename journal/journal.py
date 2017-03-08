@@ -69,6 +69,14 @@ class WorkJournal(journal.Journal):
         self._pickle_models(newmodels)
         self.save(self.file)
 
+    @property
+    def done_work(self):
+        done_work = []
+        for entry in self.entries():
+            if DONE_TAG in entry.tags:
+                done_work.append(self._get_model_and_params_from_text_task(entry.data))
+        return done_work
+
     def _get_next_undone_work(self):
         for entry in self.entries():
             if DONE_TAG not in entry.tags:
