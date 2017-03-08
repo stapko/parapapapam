@@ -6,7 +6,7 @@ from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 from hashlib import sha224
 from sklearn.base import BaseEstimator
-from ..journal import WorkJournal
+from journal import WorkJournal
 
 __all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave', 'TaskManager']
 
@@ -24,12 +24,17 @@ class TaskManager:
     def add_work(self, *args, **kwargs):
         return self.wjournal.add_work(*args, **kwargs)
 
-    def perform_work(self, n_jobs):
+    def perform_work(self, n_jobs=-1, verbose=True):
         done_work = self.wjournal.done_work
+        if done_work and verbose:
+            print("This work has already done:{}".format(done_work))
+
         for task in self.wjournal:
             if task not in done_work:
                 self._perform_task(task, n_jobs)
                 self.wjournal.task_done(task)
+                if verbose:
+                    print("The task {} done".format(task))
 
     def get_done_work(self):
         return self.wjournal.done_work
@@ -38,16 +43,16 @@ class TaskManager:
         model_class, params = task
         est = model_class()
         try:
-            self.gsearch.fit_and_save(est, params, self.scoring, self.cv)
+            self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
         except Exception as e:
-            print('Exception occured during task {} execution.'.format(task))
+            print('###\nException occured during task {} execution:\n{}'.format(task, e))
             if n_jobs != 1:
                 print('Trying to run the task in 1 thread..')
                 try:
-                    self.gsearch.fit_and_save(est, params, self.scoring, self.cv)
+                    self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
                     return
                 except Exception as e:
-                    print('Another exception occured during task {} execution in 1 thread.'.format(task))
+                    print('###\nAnother exception occured during task {} execution in 1 thread\n{}'.format(task, e))
             print('Task execution terminated. Going to the next task.')
 
 
