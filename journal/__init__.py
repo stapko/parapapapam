@@ -1,4 +1,4 @@
 from .journal import WorkJournal
 
 
-__all__ = ["WorkJournal"]
+__all__ = ['WorkJournal']

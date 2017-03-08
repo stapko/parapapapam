@@ -59,6 +59,19 @@ class WorkJournal(journal.Journal):
         task = self.tag(tag)[0]
         task.tags += [DONE_TAG]
 
+    def drop_task(self, task):
+        model, params = task
+        task_text = self._make_task_text(model, params)
+        tag = str(hash(task_text))
+        if not self._check_task_in_work(task_text, tag):
+            raise ValueError('No such task in the work journal : ', task_text)
+
+        entry = self.tag(tag)[0]
+        try:
+            self.remove(entry)
+        except Exception as e:
+            print('Exception occured during removing entry {} from journal: {}'.format(entry, e))
+
     def add_work(self, *args, **kwargs):
         work = self._get_work(*args, **kwargs)
 

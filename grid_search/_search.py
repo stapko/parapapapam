@@ -32,13 +32,22 @@ class TaskManager:
 
         for task in self.wjournal:
             if task not in done_work:
-                self._perform_task(task, n_jobs)
-                self.wjournal.task_done(task)
+                is_performed = self._perform_task(task, n_jobs)
+                if is_performed:
+                    self.wjournal.task_done(task)
+                else:
+                    self.wjournal.drop_task(task)
+
                 if verbose:
-                    print("The task {} done".format(task))
+                    verbose_output = 'The task {} done' if is_performed else\
+                                     'The task {} is not done and will be drop'
+                    print(verbose_output.format(task))
 
     def get_done_work(self):
         return self.wjournal.done_work
+
+    def get_best_models(self, model_class, n):
+        pass
 
     def _perform_task(self, task, n_jobs):
         model_class, params = task
@@ -51,10 +60,11 @@ class TaskManager:
                 print('Trying to run the task in 1 thread..')
                 try:
                     self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
-                    return
                 except Exception as e:
                     print('###\nAnother exception occured during task {} execution in 1 thread\n{}'.format(task, e))
             print('Task execution terminated. Going to the next task.')
+            return False
+        return True
 
 
 class GridSearchCVSave(GridSearchCV):
