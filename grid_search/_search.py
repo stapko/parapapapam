@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.grid_search import GridSearchCV
 from ast import literal_eval
 from sklearn.model_selection import cross_val_score
+from hashlib import sha224
+from sklearn.base import BaseEstimator
 
 __all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave']
 
@@ -48,8 +50,9 @@ class GranularGridSearchCVSave:
     def __init__(self, X, y):
         self.X = X
         self.y = y
+        self.data_hash = sha224(str(self.X) + str(self.y)).hexdigest()
 
-    def get_score_from_file(self, estimator, filename=None):
+    def get_score_from_file(self, estimator_class, cv=5, filename=None):
         return None
 
     def fit_and_save(self, estimator, params, scoring, filename=None, verbose=False, cv=5, cvs_n_jobs=1):
@@ -62,7 +65,7 @@ class GranularGridSearchCVSave:
             params_combinations = params_combinations[start_position + 1:]
 
         if not filename:
-            filename = str(estimator).partition('(')[0] + time.asctime().replace(' ', '_').replace(':', '-') + '.txt'
+            filename = self._get_default_name(estimator, cv)
         elif filename:
             if filename.rpartition('.')[-1] != 'txt':
                 raise ValueError
@@ -75,8 +78,7 @@ class GranularGridSearchCVSave:
             result = cross_val_score(estimator, X=self.X, y=self.y, scoring=scoring, cv=cv, n_jobs=cvs_n_jobs)
             mean = np.mean(result)
             std = np.std(result)
-            result_string = str(mean) + '\t' + str(std) + '\t' + str(cv) + '\t' + str(
-                params) + '\n'
+            result_string = '\t'.join(map(str, [mean, std, cv, params])) + '\n'
             with open(filename, 'a') as the_file:
                 the_file.write(result_string)
 
@@ -131,3 +133,14 @@ class GranularGridSearchCVSave:
             return 0
         except IndexError:
             return 0
+
+    def _get_default_name(self, estimator, cv):
+        try:
+            if issubclass(estimator, BaseEstimator):
+                model_name = str(estimator).rpartition('.')[-1][:-2]
+            else:
+                raise AttributeError
+        except TypeError:
+            model_name = str(estimator).partition('(')[0]
+        finally:
+            return '_'.join([self.data_hash, model_name, str(cv)]) + '.txt'
