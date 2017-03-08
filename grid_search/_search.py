@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 import numpy as np
@@ -93,36 +94,42 @@ class GridSearchCVSave(GridSearchCV):
 # If change name it also need to change it above in '__all__' list
 
 class GranularGridSearchCVSave:
-    def __init__(self, X, y):
+    def __init__(self, X, y, folder='grid_search_results'):
         self.X = X
         self.y = y
         self.data_hash = sha224(str(self.X) + str(self.y)).hexdigest()
+        self.folder = folder
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
 
     def get_score_from_file(self, estimator_class, cv=5, filename=None):
+
         if not filename:
             filename = self._get_default_name(estimator_class, cv)
         elif filename:
             if filename.rpartition('.')[-1] != 'txt':
                 raise ValueError
+
+        filename = self.folder + os.sep + filename
         data = pd.read_csv(filename, delimiter='\t')
         size = data.shape[0]
+
         if not size:
             return None
+
         result = [None] * size
         data.params = data.params.apply(literal_eval)
         data.sort_values('mean', inplace=True, ascending=False)
+
         for i, row in enumerate(data.itertuples()):
             result[i] = row.mean, row.std, estimator_class().set_params(**row.params)
         return result
 
     def fit_and_save(self, estimator, params, scoring, filename=None, verbose=False, cv=5, cvs_n_jobs=1):
-        h_e_a_d_e_r = "mean\tstd\tcv\tparams\n"
+
+        h_e_a_d_e_r = 'mean\tstd\tcv\tparams\n'
 
         params_combinations = self._params_combinations(params)
-        header_flag = self._check_header(filename, header=h_e_a_d_e_r)
-        if header_flag:
-            start_position = self._start_position(filename, params_combinations)
-            params_combinations = params_combinations[start_position + 1:]
 
         if not filename:
             filename = self._get_default_name(estimator, cv)
@@ -130,9 +137,18 @@ class GranularGridSearchCVSave:
             if filename.rpartition('.')[-1] != 'txt':
                 raise ValueError
 
+        filename = self.folder + os.sep + filename
+
+        header_flag = self._check_header(filename, header=h_e_a_d_e_r)
+
+        if header_flag:
+            start_position = self._start_position(filename, params_combinations)
+            params_combinations = params_combinations[start_position + 1:]
+
         if not header_flag:
             with open(filename, 'a') as the_file:
                 the_file.write(h_e_a_d_e_r)
+
         for params in params_combinations:
             estimator.set_params(**params)
             result = cross_val_score(estimator, X=self.X, y=self.y, scoring=scoring, cv=cv, n_jobs=cvs_n_jobs)
@@ -173,6 +189,7 @@ class GranularGridSearchCVSave:
         all_combinations = map(lambda x: [None] * number_of_params, [None] * composition)
 
         special_counter = composition
+
         for position in xrange(number_of_params):
             special_counter /= number_of_values[position]
             for number in xrange(composition):
@@ -181,6 +198,7 @@ class GranularGridSearchCVSave:
                     all_combinations[number][position] = param_values[position][param_number]
                 except TypeError:
                     all_combinations[number][position] = param_values[position]
+
         params_dict = map(lambda x: dict(zip(key_names, x)), all_combinations)
         return params_dict
 
