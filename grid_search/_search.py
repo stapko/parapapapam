@@ -6,8 +6,49 @@ from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 from hashlib import sha224
 from sklearn.base import BaseEstimator
+from ..journal import WorkJournal
 
-__all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave']
+__all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave', 'TaskManager']
+
+
+class TaskManager:
+    def __init__(self, X, y, scoring, cv):
+        self.X = X
+        self.y = y
+        self.scoring = scoring
+        self.cv = cv
+        self.gsearch = GranularGridSearchCVSave(X, y)
+        wj_filename = self.gsearch.data_hash + '.wj'
+        self.wjournal = WorkJournal(wj_filename)
+
+    def add_work(self, *args, **kwargs):
+        return self.wjournal.add_work(*args, **kwargs)
+
+    def perform_work(self, n_jobs):
+        done_work = self.wjournal.done_work
+        for task in self.wjournal:
+            if task not in done_work:
+                self._perform_task(task, n_jobs)
+                self.wjournal.task_done(task)
+
+    def get_done_work(self):
+        return self.wjournal.done_work
+
+    def _perform_task(self, task, n_jobs):
+        model_class, params = task
+        est = model_class()
+        try:
+            self.gsearch.fit_and_save(est, params, self.scoring, self.cv)
+        except Exception as e:
+            print('Exception occured during task {} execution.'.format(task))
+            if n_jobs != 1:
+                print('Trying to run the task in 1 thread..')
+                try:
+                    self.gsearch.fit_and_save(est, params, self.scoring, self.cv)
+                    return
+                except Exception as e:
+                    print('Another exception occured during task {} execution in 1 thread.'.format(task))
+            print('Task execution terminated. Going to the next task.')
 
 
 class GridSearchCVSave(GridSearchCV):
