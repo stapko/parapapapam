@@ -7,7 +7,7 @@ from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 from hashlib import sha224
 from sklearn.base import BaseEstimator
-from journal import WorkJournal
+from ..journal import WorkJournal
 
 __all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave', 'TaskManager']
 
