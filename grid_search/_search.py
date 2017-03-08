@@ -53,7 +53,21 @@ class GranularGridSearchCVSave:
         self.data_hash = sha224(str(self.X) + str(self.y)).hexdigest()
 
     def get_score_from_file(self, estimator_class, cv=5, filename=None):
-        return None
+        if not filename:
+            filename = self._get_default_name(estimator_class, cv)
+        elif filename:
+            if filename.rpartition('.')[-1] != 'txt':
+                raise ValueError
+        data = pd.read_csv(filename, delimiter='\t')
+        size = data.shape[0]
+        if not size:
+            return None
+        result = [None] * size
+        data.params = data.params.apply(literal_eval)
+        data.sort_values('mean', inplace=True, ascending=False)
+        for i, row in enumerate(data.itertuples()):
+            result[i] = row.mean, row.std, estimator_class().set_params(**row.params)
+        return result
 
     def fit_and_save(self, estimator, params, scoring, filename=None, verbose=False, cv=5, cvs_n_jobs=1):
         h_e_a_d_e_r = "mean\tstd\tcv\tparams\n"
@@ -130,9 +144,9 @@ class GranularGridSearchCVSave:
             last_params = literal_eval(data.params.tolist()[-1])
             return params_combinations.index(last_params)
         except AttributeError, ValueError:
-            return 0
+            return -1
         except IndexError:
-            return 0
+            return -1
 
     def _get_default_name(self, estimator, cv):
         try:
