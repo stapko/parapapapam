@@ -12,7 +12,7 @@ __all__ = ['GridSearchCVSave', 'GranularGridSearchCVSave', 'TaskManager']
 
 
 class TaskManager:
-    def __init__(self, X, y, scoring, cv):
+    def __init__(self, X, y, scoring, cv=5):
         self.X = X
         self.y = y
         self.scoring = scoring
