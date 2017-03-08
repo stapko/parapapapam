@@ -147,7 +147,7 @@ class GranularGridSearchCVSave:
 
         if not header_flag:
             with open(filename, 'a') as the_file:
-                the_file.write(h_e_a_d_e_r)
+                the_file.write(h_e_a_d_e_r + os.linesep)
 
         for params in params_combinations:
             estimator.set_params(**params)
@@ -165,7 +165,7 @@ class GranularGridSearchCVSave:
         try:
             with open(filename, 'r') as f:
                 first_line = f.readline()
-            return first_line == header
+            return first_line.partition('\t')[0] == 'mean'
         except:
             return False
 
