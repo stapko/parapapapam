@@ -46,8 +46,32 @@ class TaskManager:
     def get_done_work(self):
         return self.wjournal.done_work
 
-    def get_best_models(self, model_class, n):
-        pass
+    def get_best_models(self, model_class, cv=5, n=-1):
+        """
+        Returns list of n best models from particular class.
+
+        Attributes
+        ----------
+        model_class : class
+            class of model
+        cv : int (default=5)
+            number of cv folds
+        n : int (default=-1)
+            number of first models best by score. If n=-1 => return all models
+
+        Returns
+        -------
+        models : list of tuples (score, std, estimator)
+            list of best models
+        """
+
+        if model_class not in self.get_done_work():
+            raise ValueError('Class {} not in done work. Make sure that you have already perform it.'
+                             .format(model_class))
+        return self.gsearch.get_score_from_file(model_class, cv=cv)[:n]
+
+    def get_done_model_classes(self):
+        return list(map(lambda x: x[0], self.wjournal.done_work))
 
     def _perform_task(self, task, n_jobs):
         model_class, params = task
