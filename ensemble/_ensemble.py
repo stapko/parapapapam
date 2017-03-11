@@ -50,10 +50,9 @@ class Blender:
         for model in models[isorted][1:]:
             score, alpha = self.blend_two_models(X, y, blend, model, scoring=scoring, cv=cv,
                                                  proba=proba, random_state=random_state)
-            print('score : {}\nalpha : {}'.format(score, alpha))
             if score > best_scores[-1]:
                 blend = blend.get_updated_classifier((model, ), (1 - alpha, ))
-                np.append(best_scores, score)
+                best_scores = np.append(best_scores, score)
                 if verbose:
                     print('The model added to blending:\n{}\nCoef: {}\nNew score: {}'
                           .format(model, 1 - alpha, score))
