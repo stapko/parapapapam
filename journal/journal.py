@@ -85,6 +85,9 @@ class WorkJournal(journal.Journal):
     def _get_model_and_params_from_text_task(self, text_task):
         text_model, _lattice, text_params = text_task.partition(LATTICE)
         model = self._unpickle_models()[text_model]
+        with open('blablabla.txt','w') as the_file:
+            the_file.write(text_task)
+            
         params = ast.literal_eval(text_params)
         return model, params
 
