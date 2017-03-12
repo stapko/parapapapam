@@ -2,11 +2,11 @@ import os
 import time
 import pandas as pd
 import numpy as np
-from sklearn.grid_search import GridSearchCV
 from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 from hashlib import sha224
 from sklearn.base import BaseEstimator
+from sklearn.externals.joblib.my_exceptions import  JoblibException
 from ..journal import WorkJournal
 
 __all__ = ['GranularGridSearchCVSave', 'TaskManager']
@@ -65,7 +65,7 @@ class TaskManager:
             list of best models
         """
 
-        if model_class not in self.get_done_work():
+        if model_class not in self.get_done_model_classes():
             raise ValueError('Class {} not in done work. Make sure that you have already perform it.'
                              .format(model_class))
         return self.gsearch.get_score_from_file(model_class, cv=cv)[:n]
@@ -78,20 +78,18 @@ class TaskManager:
         est = model_class()
         try:
             self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
-        except Exception as e:
-            print('###\nException occured during task {} execution:\n{}'.format(task, e))
+        except JoblibException as je:
+            print('###\nJoblibException occured during task {} execution:\n{}'.format(task, je))
             if n_jobs != 1:
                 print('Trying to run the task in 1 thread..')
                 try:
                     self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
                 except Exception as e:
                     print('###\nAnother exception occured during task {} execution in 1 thread\n{}'.format(task, e))
-            print('Task execution terminated. Going to the next task.')
-            return False
+                    raise
+                
         return True
 
-
-# If change name it also need to change it above in '__all__' list
 
 class GranularGridSearchCVSave:
     def __init__(self, X, y, folder='grid_search_results'):
