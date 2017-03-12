@@ -1,0 +1,1 @@
+# There will be BlendEstimator abstract class

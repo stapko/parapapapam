@@ -7,7 +7,7 @@ from ast import literal_eval
 from sklearn.model_selection import cross_val_score
 from hashlib import sha224
 from sklearn.base import BaseEstimator
-from journal import WorkJournal
+from ..journal import WorkJournal
 
 __all__ = ['GranularGridSearchCVSave', 'TaskManager']
 
@@ -32,13 +32,46 @@ class TaskManager:
 
         for task in self.wjournal:
             if task not in done_work:
-                self._perform_task(task, n_jobs)
-                self.wjournal.task_done(task)
+                is_performed = self._perform_task(task, n_jobs)
+                if is_performed:
+                    self.wjournal.task_done(task)
+                else:
+                    self.wjournal.drop_task(task)
+
                 if verbose:
-                    print("The task {} done".format(task))
+                    verbose_output = 'The task {} done' if is_performed else\
+                                     'The task {} is not done and will be drop'
+                    print(verbose_output.format(task))
 
     def get_done_work(self):
         return self.wjournal.done_work
+
+    def get_best_models(self, model_class, cv=5, n=-1):
+        """
+        Returns list of n best models from particular class.
+
+        Attributes
+        ----------
+        model_class : class
+            class of model
+        cv : int (default=5)
+            number of cv folds
+        n : int (default=-1)
+            number of first models best by score. If n=-1 => return all models
+
+        Returns
+        -------
+        models : list of tuples (score, std, estimator)
+            list of best models
+        """
+
+        if model_class not in self.get_done_work():
+            raise ValueError('Class {} not in done work. Make sure that you have already perform it.'
+                             .format(model_class))
+        return self.gsearch.get_score_from_file(model_class, cv=cv)[:n]
+
+    def get_done_model_classes(self):
+        return list(map(lambda x: x[0], self.wjournal.done_work))
 
     def _perform_task(self, task, n_jobs):
         model_class, params = task
@@ -51,10 +84,11 @@ class TaskManager:
                 print('Trying to run the task in 1 thread..')
                 try:
                     self.gsearch.fit_and_save(est, params=params, scoring=self.scoring, cv=self.cv)
-                    return
                 except Exception as e:
                     print('###\nAnother exception occured during task {} execution in 1 thread\n{}'.format(task, e))
             print('Task execution terminated. Going to the next task.')
+            return False
+        return True
 
 
 # If change name it also need to change it above in '__all__' list

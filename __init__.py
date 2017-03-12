@@ -1,3 +1,3 @@
-__all__ = ('grid_search',
+__all__ = ['grid_search',
            'journal',
-           'ensemble')
+           'ensemble']

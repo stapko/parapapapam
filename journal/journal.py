@@ -41,6 +41,14 @@ class WorkJournal(journal.Journal):
             raise StopIteration
         return next_task
 
+    @property
+    def done_work(self):
+        done_work = []
+        for entry in self.entries():
+            if DONE_TAG in entry.tags:
+                done_work.append(self._get_model_and_params_from_text_task(entry.data))
+        return done_work
+
     def task_done(self, task):
         model, params = task
         task_text = self._make_task_text(model, params)
@@ -50,6 +58,19 @@ class WorkJournal(journal.Journal):
 
         task = self.tag(tag)[0]
         task.tags += [DONE_TAG]
+
+    def drop_task(self, task):
+        model, params = task
+        task_text = self._make_task_text(model, params)
+        tag = str(hash(task_text))
+        if not self._check_task_in_work(task_text, tag):
+            raise ValueError('No such task in the work journal : ', task_text)
+
+        entry = self.tag(tag)[0]
+        try:
+            self.remove(entry)
+        except Exception as e:
+            print('Exception occured during removing entry {} from journal: {}'.format(entry, e))
 
     def add_work(self, *args, **kwargs):
         work = self._get_work(*args, **kwargs)
@@ -68,14 +89,6 @@ class WorkJournal(journal.Journal):
 
         self._pickle_models(newmodels)
         self.save(self.file)
-
-    @property
-    def done_work(self):
-        done_work = []
-        for entry in self.entries():
-            if DONE_TAG in entry.tags:
-                done_work.append(self._get_model_and_params_from_text_task(entry.data))
-        return done_work
 
     def _get_next_undone_work(self):
         for entry in self.entries():
