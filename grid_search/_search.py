@@ -39,8 +39,8 @@ class TaskManager:
                     self.wjournal.drop_task(task)
 
                 if verbose:
-                    verbose_output = 'The task {} done' if is_performed else\
-                                     'The task {} is not done and will be drop'
+                    verbose_output = 'The task {} done' if is_performed else \
+                        'The task {} is not done and will be drop'
                     print(verbose_output.format(task))
 
     def get_done_work(self):
